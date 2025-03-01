@@ -1,0 +1,25 @@
+.welcome-container {
+    background: url("https://source.unsplash.com/1600x900/?education,technology") no-repeat center center/cover;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height:50vh;
+    text-align: center;
+  }
+
+  .welcome-content {
+    text-align: center;
+    color: rgb(0, 0, 0);
+    margin-top: 100px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    display: inline-block;
+    border-radius: 10px;
+  }
+
+  .footer {
+    position: absolute;
+    width: 100%;
+    bottom: 0;
+  }
