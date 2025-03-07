@@ -6,6 +6,7 @@ import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import TakeExam from "./pages/TakeExam";
+import ExamSubmitted from "./pages/ExamSubmitted";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 const ProtectedRoute = ({ element, role }) => {
@@ -27,6 +28,7 @@ function App() {
           <Route path="/exam/:examId" element={<ProtectedRoute element={<TakeExam />} role="student" />} />
           <Route path="/teacher-dashboard" element={<ProtectedRoute element={<TeacherDashboard />} role="teacher" />} />
           <Route path="/admin-dashboard" element={<ProtectedRoute element={<AdminDashboard />} role="admin" />} />
+          <Route path="/exam-submitted" element={<ExamSubmitted />} />
         </Routes>
       </AuthProvider>
     </Router>

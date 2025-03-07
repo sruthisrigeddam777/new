@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Exam, Question, StudentAnswer
-from .serializers import ExamSerializer
+from .serializers import ExamSerializer, QuestionSerializer
 from django.http import JsonResponse
 import traceback
 
@@ -74,13 +74,25 @@ def create_exam(request):
         return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
 
     # Ensure created_by is set to the authenticated user's ID
-    exam_data = request.data.copy()
-    exam_data["created_by"] = request.user.id
+    #exam_data = request.data.copy()
+    #exam_data["created_by"] = request.user.id
+
+    exam_data = request.data
+    exam = Exam.objects.create(title=exam_data["title"],description=exam_data["description"],created_by=request.user)
+
+    for question in exam_data["questions"]:
+        Question.objects.create(
+            exam=exam,
+            text=question["text"],
+            question_type=question["question_type"],
+            options=question.get("options", None),
+            correct_answer=question.get("correct_answer", None)
+        )
 
     serializer = ExamSerializer(data=exam_data)
     if serializer.is_valid():
         serializer.save()
-        return Response({"message": "Exam created successfully"}, status=status.HTTP_201_CREATED)
+        return Response({"message": "Exam and questions created successfully"}, status=status.HTTP_201_CREATED)
 
 
 

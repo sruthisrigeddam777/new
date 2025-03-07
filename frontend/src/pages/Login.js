@@ -26,6 +26,9 @@ const Login = () => {
       localStorage.setItem("access_token", response.data.access);
       localStorage.setItem("refresh_token", response.data.refresh);
 
+    console.log("New Access Token:", response.data.access);
+    console.log("New Refresh Token:", response.data.refresh);
+
       const decodedUser = jwtDecode(response.data.access);
       setUser(decodedUser);  // ✅ Update user state
 

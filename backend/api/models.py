@@ -27,6 +27,7 @@ class Exam(models.Model):
 
     def __str__(self):
         return self.title
+
 class Question(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name="questions")
     text = models.TextField()

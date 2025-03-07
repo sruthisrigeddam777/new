@@ -49,9 +49,14 @@ export const useAuth = () => useContext(AuthContext);
 //   useEffect(() => {
 //     const token = localStorage.getItem("access_token");
 //     if (token) {
-//       setUser(jwtDecode(token)); // Decode JWT to get user info
+//       try {
+//         setUser(jwtDecode(token)); // ✅ Decode JWT and update user state
+//       } catch (error) {
+//         console.error("Error decoding token:", error);
+//         localStorage.removeItem("access_token");
+//       }
 //     }
-//   }, [localStorage.getItem("access_token")]);
+//   }, []);  // ✅ No dependency on `localStorage.getItem("access_token")`
 
 //   const logout = () => {
 //     localStorage.removeItem("access_token");
@@ -61,10 +66,10 @@ export const useAuth = () => useContext(AuthContext);
 //   };
 
 //   return (
-//     <AuthContext.Provider value={{ user, logout }}>
+//     <AuthContext.Provider value={{ user, setUser, logout }}>
 //       {children}
 //     </AuthContext.Provider>
 //   );
 // };
 
-// export  const useAuth = () => useContext(AuthContext);
+// export const useAuth = () => useContext(AuthContext);
