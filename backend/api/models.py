@@ -44,6 +44,15 @@ class StudentAnswer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     answer = models.TextField()
     is_correct = models.BooleanField(default=False)
+    marks_obtained = models.FloatField(default=0)
 
     def __str__(self):
         return f"{self.student.username} - {self.exam.title} - {self.question.text}"
+
+class StudentExamAttempt(models.Model):
+    student = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
+    attempted = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.student.username} - {self.exam.title} - {'Attempted' if self.attempted else 'Not Attempted'}"

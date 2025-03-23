@@ -3,17 +3,32 @@ import { useAuth } from "../context/AuthContext";
 import { fetchExams } from "../services/examService";
 import { useNavigate } from "react-router-dom";
 import { Container, Table, Button, Card } from "react-bootstrap";
+import axios from "axios";
 
 const StudentDashboard = () => {
   const { user, logout } = useAuth();
   const [exams, setExams] = useState([]);
   const navigate = useNavigate();
 
+  // useEffect(() => {
+  //   const loadExams = async () => {
+  //     try {
+  //       const data = await fetchExams();
+  //       setExams(data);
+  //     } catch (error) {
+  //       console.error("Error fetching exams", error);
+  //     }
+  //   };
+  //   loadExams();
+  // }, []);
   useEffect(() => {
     const loadExams = async () => {
       try {
-        const data = await fetchExams();
-        setExams(data);
+        const response = await axios.get("http://127.0.0.1:8000/auth/student/exams/", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+        });
+        console.log("Fetched Exams:", response.data);  // ✅ Debugging log
+        setExams(response.data);
       } catch (error) {
         console.error("Error fetching exams", error);
       }
@@ -21,8 +36,13 @@ const StudentDashboard = () => {
     loadExams();
   }, []);
 
+
   const handleAttemptExam = (examId) => {
     navigate(`/exam/${examId}`);
+  };
+
+  const handleViewScore = (examId) => {
+    navigate(`/exam/${examId}/score`);
   };
 
   return (
@@ -48,15 +68,27 @@ const StudentDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {exams.map((exam, index) => (
-                <tr key={index}>
+              {exams.map((exam) => (
+                <tr key={exam.id}>
                   <td>{exam.id}</td>
                   <td>{exam.title}</td>
                   <td>{exam.description}</td>
                   <td>
-                    <Button variant="success" onClick={() => handleAttemptExam(exam.id)}>
+                    {/* <Button variant="success" onClick={() => handleAttemptExam(exam.id)}>
                       Attempt Exam
-                    </Button>
+                    </Button> */}
+                    {!exam.attempted ? (
+                      <Button variant="success" onClick={() => handleAttemptExam(exam.id)}>
+                        Attempt Exam
+                      </Button>
+                    ) : (
+                      <>
+                        <span className="text-success">Attempted</span>
+                        <Button variant="info" onClick={() => handleViewScore(exam.id)} className="ms-2">
+                          View Score
+                        </Button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -71,50 +103,3 @@ const StudentDashboard = () => {
 };
 
 export default StudentDashboard;
-
-// import React, { useState, useEffect } from "react";
-// import { useAuth } from "../context/AuthContext";
-// import { fetchExams } from "../services/examService";
-// import { useNavigate } from "react-router-dom";
-
-// const StudentDashboard = () => {
-//   const { user, logout } = useAuth();
-//   const [exams, setExams] = useState([]);
-//   const navigate = useNavigate();
-
-//   useEffect(() => {
-//     const loadExams = async () => {
-//       try {
-//         const data = await fetchExams();
-//         setExams(data);
-//       } catch (error) {
-//         console.error("Error fetching exams", error);
-//       }
-//     };
-//     loadExams();
-//   }, []);
-
-//   const handleAttemptExam = () => {
-//     navigate("/exam/${examId}");
-//   };
-
-//   return (
-//     <div>
-//       <h2>Student Dashboard</h2>
-//       <p>Welcome, {user?.username}!</p>
-//       <button onClick={logout}>Logout</button>
-
-//       <h3>Available Exams</h3>
-//       <ul>
-//         {exams.map((exam) => (
-//           <li key={exam.id}>
-//             <strong>{exam.title}</strong>: {exam.description}
-//             <button onClick={() => handleAttemptExam(exam.id)}>Attempt Exam</button> {/* Will be implemented later */}
-//           </li>
-//         ))}
-//       </ul>
-//     </div>
-//   );
-// };
-
-// export default StudentDashboard;
