@@ -23,6 +23,7 @@ EMAIL_USE_TLS = True
 EMAIL_TIMEOUT = 30
 EMAIL_HOST_USER = "gayathrikamu@gmail.com"
 EMAIL_HOST_PASSWORD = "kvoytporaomljezq"
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

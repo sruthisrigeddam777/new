@@ -10,8 +10,11 @@ from .models import Exam, Question, StudentAnswer, StudentExamAttempt
 from .serializers import ExamSerializer, QuestionSerializer
 from django.http import JsonResponse
 from django.db import models
+import smtplib
 import random
+import time
 from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.conf import settings
 from .utils import send_email_custom
 import traceback
@@ -276,17 +279,15 @@ def send_reset_otp(request):
     otp = random.randint(100000, 999999)
     otp_storage[email] = otp
 
-    # ✅ Send OTP via email
-    send_mail(
-        "Password Reset OTP",
-        f"Your OTP for password reset is: {otp}. Do not share it with anyone.",
-        settings.EMAIL_HOST_USER,
-        [email],
-        fail_silently=False,
-    )
+    # ✅ Use the same method as `send_otp`
+    subject = "Password Reset OTP"
+    message = f"Your OTP for password reset is: {otp}. Do not share it with anyone."
+    success = send_email_custom(subject, message, email)
 
-    return Response({"message": "OTP sent to your email"}, status=status.HTTP_200_OK)
-
+    if success:
+        return Response({"message": "OTP sent successfully"}, status=status.HTTP_200_OK)
+    else:
+        return Response({"error": "Failed to send OTP"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 @api_view(['POST'])
 def verify_reset_otp(request):
     email = request.data.get("email")
