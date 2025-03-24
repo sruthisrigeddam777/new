@@ -71,6 +71,18 @@ const TeacherDashboard = () => {
       toast.error("Error creating exam");
     }
   };
+  const gradeAnswer = async (answerId, marks) => {
+    try {
+      await axios.post(
+        "http://127.0.0.1:8000/auth/exam/grade/",
+        { answer_id: answerId, marks: marks },
+        { headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` } }
+      );
+      toast.success("Answer graded successfully!");
+    } catch (error) {
+      toast.error("Error grading answer");
+    }
+  };
 
   return (
     <Container className="mt-5">

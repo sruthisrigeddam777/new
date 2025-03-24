@@ -12,7 +12,9 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem("access_token");
     if (token) {
       try {
-        setUser(jwtDecode(token)); // ✅ Decode JWT and update user state
+        const decodedToken = jwtDecode(token);
+        console.log("Decoded Token:",decodedToken);
+        setUser(decodedToken); // ✅ Decode JWT and update user state
       } catch (error) {
         console.error("Error decoding token:", error);
         localStorage.removeItem("access_token");
