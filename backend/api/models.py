@@ -47,3 +47,14 @@ class StudentAnswer(models.Model):
 
     def __str__(self):
         return f"{self.student.username} - {self.exam.title} - {self.question.text}"
+
+
+
+
+class ProctoringLog(models.Model):
+    student = models.CharField(max_length=100)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    violation_type = models.CharField(max_length=255)  # "Tab Switch", "No Face Detected", etc.
+
+    def __str__(self):
+        return f"{self.student} - {self.violation_type} at {self.timestamp}"

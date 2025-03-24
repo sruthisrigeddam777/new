@@ -4,8 +4,20 @@ import axios from "axios";
 import { Container, Table, Button, Card } from "react-bootstrap";
 
 const AdminDashboard = () => {
-  const { user, logout } = useAuth();
+  // const { user, logout } = useAuth();
   const [users, setUsers] = useState([]);
+  const navigate = navigate();
+  const logout = () => {
+    // Clear authentication data (adjust as needed)
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+  
+    // Redirect to login page
+    navigate("/login");
+  };
+  
+
+  
 
   useEffect(() => {
     const fetchUsers = async () => {

@@ -5,9 +5,18 @@ import { useNavigate } from "react-router-dom";
 import { Container, Table, Button, Card } from "react-bootstrap";
 
 const StudentDashboard = () => {
-  const { user, logout } = useAuth();
+  // const { user, logout } = useAuth();
   const [exams, setExams] = useState([]);
   const navigate = useNavigate();
+  const logout = () => {
+    // Clear authentication data (adjust as needed)
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+  
+    // Redirect to login page
+    navigate("/login");
+  };
+  
 
   useEffect(() => {
     const loadExams = async () => {

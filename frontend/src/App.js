@@ -8,6 +8,9 @@ import AdminDashboard from "./pages/AdminDashboard";
 import TakeExam from "./pages/TakeExam";
 import ExamSubmitted from "./pages/ExamSubmitted";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import ExamPage from "./components/ExamPage";
+//import Disqualified from "./components/DisQualified";
+import DisQualified from "./components/DisQualified";
 
 const ProtectedRoute = ({ element, role }) => {
   const { user } = useAuth();
@@ -29,6 +32,8 @@ function App() {
           <Route path="/teacher-dashboard" element={<ProtectedRoute element={<TeacherDashboard />} role="teacher" />} />
           <Route path="/admin-dashboard" element={<ProtectedRoute element={<AdminDashboard />} role="admin" />} />
           <Route path="/exam-submitted" element={<ExamSubmitted />} />
+          <Route path="/" element={<ExamPage />} />
+        <Route path="/exam-disqualified" element={<DisQualified />} />
         </Routes>
       </AuthProvider>
     </Router>

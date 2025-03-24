@@ -11,3 +11,41 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+
+
+/* html, body {
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+body {
+  pointer-events: none;
+}
+
+body:focus {
+  pointer-events: auto;
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -webkit-touch-callout: none;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f4;
+}
+ */

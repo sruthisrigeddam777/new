@@ -105,12 +105,22 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'djongo',
+#         'NAME': 'online_exam_db',
+#         'CLIENT': {
+#             'host': 'mongodb+srv://gayathri:kamakshi@cluster0.wf42a.mongodb.net/'
+#         }
+#     }
+# }
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
         'NAME': 'online_exam_db',
         'CLIENT': {
-            'host': 'mongodb+srv://gayathri:kamakshi@cluster0.wf42a.mongodb.net/'
+            # 'host': 'mongodb+srv://n190797:2ccJlN2YHDz1N3ms@cluster0.tualc.mongodb.net/'
+            'host':'mongodb+srv://n190797:2ccJlN2YHDz1N3ms@cluster0.tualc.mongodb.net/'
         }
     }
 }
