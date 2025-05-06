@@ -1,27 +1,47 @@
-
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
-from rest_framework.decorators import api_view
+from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Exam, Question, StudentAnswer, StudentExamAttempt
-from .serializers import ExamSerializer, QuestionSerializer
+from .models import Exam, Question, StudentAnswer, StudentExamAttempt,ContactMessage, DisqualifiedAttempt
+from .serializers import ExamSerializer, QuestionSerializer, ContactMessageSerializer
 from django.http import JsonResponse
 from django.db import models
 import smtplib
 import random
 import time
+#from pymongo import MongoClient
 from django.core.mail import send_mail
 from django.core.mail import EmailMessage
+from django.core.cache import cache
 from django.conf import settings
 from .utils import send_email_custom
 import traceback
+from difflib import SequenceMatcher
+from ultralytics import YOLO
+import cv2
+import numpy as np
+import base64
+
+from django.views.decorators.csrf import csrf_exempt
+import json
+import io
+from PIL import Image
+from io import BytesIO
+import os
+from datetime import datetime
+
+yolo_model = YOLO("yolov8n.pt")
+
+def similarity_score(answer, correct_answer):
+    return SequenceMatcher(None, answer.lower(), correct_answer.lower()).ratio()
+
 
 def homepage(request):
-    return JsonResponse({"message":"Welcome to the Online Exam System API"})
+    return JsonResponse({"message":"Welcome to the Online Exam System"})
 
 User = get_user_model()
 
@@ -53,8 +73,20 @@ def register_user(request):
         if User.objects.filter(username=username).exists():
             return Response({"error": "Username already exists"}, status=status.HTTP_400_BAD_REQUEST)
 
+        # # ✅ Use PyMongo to check if the username already exists
+        # if users_collection.find_one({"username": username}):
+        #     return Response({"error": "Username already exists"}, status=status.HTTP_400_BAD_REQUEST)
+
 
         user = User.objects.create(username=username, password=make_password(password), email=email, role=role)
+        # # ✅ Insert user into MongoDB
+        # new_user = {
+        #     "username": username,
+        #     "email": email,
+        #     "password": make_password(password),  # Hash password
+        #     "role": role
+        # }
+        # users_collection.insert_one(new_user)
         verified_emails.remove(email)
 
         #del otp_storage[email]
@@ -110,14 +142,34 @@ def list_exams(request):
     serializer = ExamSerializer(exams, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-# Get Exam Details with Questions
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_exam_details(request, exam_id):
     try:
         exam = Exam.objects.get(id=exam_id)
-        serializer = ExamSerializer(exam)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        questions = exam.questions.all()  # Use the correct related name
+
+        exam_data = {
+            "id": exam.id,
+            "title": exam.title,
+            "description": exam.description,
+            "duration": exam.duration,
+            "questions": [
+                {
+                    "id": q.id,
+                    "text": q.text,
+                    "question_type": q.question_type,
+                    "options": [{"id": idx, "text": opt} for idx, opt in enumerate(q.options)] if q.options else [],
+                    #"options": q.options if q.options else [],  # ✅ Fix: Directly return options list
+                    #"options":[{"id":opt.id, "text": opt.text} for opt in q.options.all()],
+                    "correct_answer": q.correct_answer if request.user.role == "teacher" else None
+                }
+                for q in questions
+            ]
+        }
+        return Response(exam_data, status=status.HTTP_200_OK)
     except Exam.DoesNotExist:
         return Response({"error": "Exam not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -146,8 +198,20 @@ def submit_answers(request):
 
     for answer in answers_data:
         question = Question.objects.get(id=answer["question_id"])
-        is_correct = (answer["answer"] == question.correct_answer) if question.question_type == "MCQ" else None
-        marks = 1 if is_correct else 0
+        # is_correct = (answer["answer"] == question.correct_answer) if question.question_type == "MCQ" else None
+        # marks = 1 if is_correct else 0
+        is_correct = None  # Subjective questions can't be auto-graded
+        #marks = 1 if (question.question_type == "MCQ" and answer["answer"] == question.correct_answer) else None
+        marks =0
+
+        if question.question_type == "MCQ":
+            is_correct = answer["answer"] == question.correct_answer
+            marks = 1 if is_correct else 0
+        elif question.question_type == "Subjective" and question.correct_answer:
+            similarity = similarity_score(answer["answer"], question.correct_answer)
+            marks = round(similarity, 2)  # Score between 0 to 1
+            is_correct = marks >= 0.7  # Mark correct if similarity ≥ 70%
+
 
         StudentAnswer.objects.create(
             student=request.user,
@@ -315,3 +379,141 @@ def reset_password(request):
 
     except User.DoesNotExist:
         return Response({"error": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def submit_contact(request):
+    serializer = ContactMessageSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"message": "Message received successfully!"}, status=201)
+    return Response(serializer.errors, status=400)
+
+def decode_base64_image(image_data):
+    try:
+        if ',' in image_data:
+            header, image_data = image_data.split(',')
+            print("Image header:", header)
+        img_bytes = base64.b64decode(image_data)
+        img_array = np.frombuffer(img_bytes, dtype=np.uint8)
+        img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+        return img
+    except Exception as e:
+        print("Error decoding image:", e)
+        return None
+
+def increment_violation(user, key):
+    cache_key = f"violation:{user.id}:{key}"
+    #cache_key = f"violation:{user.id}"
+    count = cache.get(cache_key, 0) + 1
+    cache.set(cache_key, count, timeout=60 * 60)  # keep for 1 hour
+    return count
+
+def log_violation(user, category, image_data=None):
+    # Save the violation details to a folder (or database later)
+    folder = "violation_logs"
+    os.makedirs(folder, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    username = user.username
+    filename = f"{folder}/{username}_{category}_{timestamp}.jpg"
+
+    if image_data:
+        try:
+            with open(filename, "wb") as f:
+                f.write(base64.b64decode(image_data))
+            print(f"[LOGGED] Violation saved: {filename}")
+        except Exception as e:
+            print("Failed to save image log:", e)
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def verify_face(request):
+    try:
+        image_data = request.data.get("image")
+        exam_id = request.data.get("exam_id")
+
+        if not image_data or not exam_id:
+            return Response({"error": "Missing image or exam_id."}, status=400)
+
+        try:
+            exam = Exam.objects.get(id=exam_id)
+        except Exam.DoesNotExist:
+            return Response({"error": "Exam not found"}, status=404)
+
+        if ',' in image_data:
+            _, image_data = image_data.split(',')
+
+        img_bytes = base64.b64decode(image_data)
+        np_arr = np.frombuffer(img_bytes, np.uint8)
+        frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
+        if frame is None:
+            return Response({"error": "Failed to decode image"}, status=400)
+
+        # Run YOLOv8 inference
+        results = yolo_model(frame)[0]
+        names = yolo_model.names
+
+        person_count = 0
+        unauthorized_items = []
+
+        for r in results.boxes.data.tolist():
+            _, _, _, _, _, class_id = r
+            label = names[int(class_id)]
+
+            if label == "person":
+                person_count += 1
+            if label in ["cell phone", "book", "laptop"]:
+                unauthorized_items.append(label)
+
+        # Evaluate detection results
+        if person_count == 0:
+            strikes = increment_violation(request.user, "no_person")
+            log_violation(request.user, "no_person", image_data=image_data)
+
+            if strikes >= 3:
+                DisqualifiedAttempt.objects.get_or_create(user=request.user, exam=exam, defaults={
+                    "reason": "no_person"
+                })
+                return Response({"status": "disqualified", "reason": "No person detected multiple times."})
+            return Response({"status": "no_person", "strikes": strikes})
+
+        elif person_count > 1:
+            strikes = increment_violation(request.user, "multiple_faces")
+            log_violation(request.user, "multiple_faces", image_data=image_data)
+
+            if strikes >= 3:
+                DisqualifiedAttempt.objects.get_or_create(user=request.user, exam=exam, defaults={
+                    "reason": "multiple_faces"
+                })
+                return Response({"status": "disqualified", "reason": "Multiple persons are detected multiple times."})
+            return Response({"status": "multiple_faces", "strikes": strikes})
+
+        elif unauthorized_items:
+            strikes = increment_violation(request.user, "unauthorized_object")
+            log_violation(request.user, "unauthorized_object", image_data=image_data)
+
+            if strikes >= 3:
+                DisqualifiedAttempt.objects.get_or_create(user=request.user, exam=exam, defaults={
+                    "reason": "unauthorized_object"
+                })
+                return Response({"status": "disqualified", "reason": "Unauthorized objects are detected multiple times."})
+            return Response({"status": "unauthorized_object", "items": unauthorized_items, "strikes": strikes})
+        else:
+            return Response({"status": "ok"})
+
+    except Exception as e:
+        import traceback
+        print("Error in verify_face:", traceback.format_exc())
+        return Response({"error": "Internal error during detection"}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def student_available_exams(request):
+    disqualified_ids = DisqualifiedAttempt.objects.filter(user=request.user).values_list("exam_id", flat=True)
+    available_exams = Exam.objects.exclude(id__in=disqualified_ids)
+    data = [{"id": exam.id, "title": exam.title, "description": exam.description} for exam in available_exams]
+    return Response(data)

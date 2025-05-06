@@ -1,9 +1,15 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Container, Card, Button } from "react-bootstrap";
 
 const ExamSubmitted = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    }
+  }, []);
 
   return (
     <Container className="d-flex justify-content-center align-items-center vh-100">

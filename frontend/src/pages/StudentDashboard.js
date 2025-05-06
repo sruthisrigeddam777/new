@@ -6,30 +6,11 @@ import { Container, Table, Button, Card } from "react-bootstrap";
 import axios from "axios";
 
 const StudentDashboard = () => {
-  // const { user, logout } = useAuth();
+  const { user, logout } = useAuth();
   const [exams, setExams] = useState([]);
   const navigate = useNavigate();
-  const logout = () => {
-    // Clear authentication data (adjust as needed)
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-  
-    // Redirect to login page
-    navigate("/login");
-  };
-  
 
-  // useEffect(() => {
-  //   const loadExams = async () => {
-  //     try {
-  //       const data = await fetchExams();
-  //       setExams(data);
-  //     } catch (error) {
-  //       console.error("Error fetching exams", error);
-  //     }
-  //   };
-  //   loadExams();
-  // }, []);
+
   useEffect(() => {
     const loadExams = async () => {
       try {

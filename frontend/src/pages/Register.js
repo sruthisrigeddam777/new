@@ -5,6 +5,7 @@ import { ToastContainer, toast } from "react-toastify";
 import { FaUser, FaUserTag } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import { RiLockPasswordFill } from "react-icons/ri";
+import { Container, Card, Button, Form, Alert } from "react-bootstrap";
 import "react-toastify/dist/ReactToastify.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 
@@ -17,6 +18,7 @@ const Register = () => {
     role: "student",
     otp: "",
   });
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -31,7 +33,7 @@ const Register = () => {
       toast.success(response.data.message);
       setStep(2); // Move to Step 2 (Verify OTP)
     } catch (error) {
-      toast.error(error.response?.data?.error || "Error sending OTP.");
+      setError(error.response?.data?.error || "Error sending OTP.");
     }
   };
 
@@ -43,7 +45,7 @@ const Register = () => {
       toast.success(response.data.message);
       setStep(3); // Move to Step 3 (Register)
     } catch (error) {
-      toast.error(error.response?.data?.error || "Invalid OTP.");
+      setError(error.response?.data?.error || "Invalid OTP.");
     }
   };
 
@@ -60,75 +62,105 @@ const Register = () => {
   };
 
   return (
-    <div className="container d-flex justify-content-center align-items-center vh-100">
-      <div className="card shadow p-4" style={{ maxWidth: "400px", width: "100%" }}>
-        <h2 className="text-center mb-4">Register</h2>
+    <Container className="d-flex justify-content-center align-items-center vh-100">
+      <Card className="p-4 shadow-lg text-center" style={{ maxWidth: "420px", width: "100%" }}>
+        <h2 className="text-primary fw-bold">Register</h2>
+        {error && <Alert variant="danger">{error}</Alert>}
 
         {step === 1 && (
-          <form onSubmit={handleSendOtp}>
-            <div className="mb-3 input-group">
+          <Form onSubmit={handleSendOtp}>
+            <Form.Group className="mb-3 input-group">
               <span className="input-group-text"><MdEmail /></span>
-              <input
+              <Form.Control
                 type="email"
                 name="email"
-                className="form-control"
-                placeholder="Enter your email"
+                value={formData.email}
                 onChange={handleChange}
+                placeholder="Enter your email"
                 required
               />
-            </div>
-            <button type="submit" className="btn btn-primary w-100">Send OTP</button>
-          </form>
+            </Form.Group>
+            <Button type="submit" className="w-100 fw-bold" variant="primary">
+              Send OTP
+            </Button>
+          </Form>
         )}
 
         {step === 2 && (
-          <form onSubmit={handleVerifyOtp}>
-            <div className="mb-3 input-group">
+          <Form onSubmit={handleVerifyOtp}>
+            <Form.Group className="mb-3 input-group">
               <span className="input-group-text">🔢</span>
-              <input
+              <Form.Control
                 type="text"
                 name="otp"
-                className="form-control"
-                placeholder="Enter OTP"
+                value={formData.otp}
                 onChange={handleChange}
+                placeholder="Enter OTP"
                 required
               />
-            </div>
-            <button type="submit" className="btn btn-success w-100">Verify OTP</button>
-          </form>
+            </Form.Group>
+            <Button type="submit" className="w-100 fw-bold" variant="success">
+              Verify OTP
+            </Button>
+          </Form>
         )}
 
         {step === 3 && (
-          <form onSubmit={handleRegister}>
-            <div className="mb-3 input-group">
+          <Form onSubmit={handleRegister}>
+            <Form.Group className="mb-3 input-group">
               <span className="input-group-text"><FaUser /></span>
-              <input type="text" name="username" className="form-control" placeholder="Username" onChange={handleChange} required />
-            </div>
+              <Form.Control
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                placeholder="Username"
+                required
+              />
+            </Form.Group>
 
-            <div className="mb-3 input-group">
+            <Form.Group className="mb-3 input-group">
               <span className="input-group-text"><RiLockPasswordFill /></span>
-              <input type="password" name="password" className="form-control" placeholder="Password" onChange={handleChange} required />
-            </div>
+              <Form.Control
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Password"
+                required
+              />
+            </Form.Group>
 
-            <div className="mb-3 input-group">
+            <Form.Group className="mb-3 input-group">
               <span className="input-group-text"><FaUserTag /></span>
-              <select name="role" className="form-select" onChange={handleChange}>
+              <Form.Select name="role" value={formData.role} onChange={handleChange}>
                 <option value="student">Student</option>
                 <option value="teacher">Teacher</option>
                 <option value="admin">Admin</option>
-              </select>
-            </div>
+              </Form.Select>
+            </Form.Group>
 
-            <button type="submit" className="btn btn-success w-100">Register</button>
-          </form>
+            <Button type="submit" className="w-100 fw-bold" variant="success">
+              Register
+            </Button>
+          </Form>
         )}
-      </div>
+
+        {/* ✅ Already Registered? Login Link */}
+        <p className="mt-3 text-muted">
+          Already have an account?{" "}
+          <a href="/login" className="text-decoration-none text-primary fw-bold">
+            Login here
+          </a>
+        </p>
+      </Card>
       <ToastContainer />
-    </div>
+    </Container>
   );
 };
 
 export default Register;
+
 
 // import React, { useState } from "react";
 // import axios from "axios";
@@ -141,11 +173,13 @@ export default Register;
 // import "bootstrap/dist/css/bootstrap.min.css";
 
 // const Register = () => {
+//   const [step, setStep] = useState(1); // Step 1: Send OTP, Step 2: Verify OTP, Step 3: Register
 //   const [formData, setFormData] = useState({
 //     username: "",
 //     email: "",
 //     password: "",
 //     role: "student",
+//     otp: "",
 //   });
 //   const navigate = useNavigate();
 
@@ -153,7 +187,32 @@ export default Register;
 //     setFormData({ ...formData, [e.target.name]: e.target.value });
 //   };
 
-//   const handleSubmit = async (e) => {
+//   // ✅ Step 1: Send OTP
+//   const handleSendOtp = async (e) => {
+//     e.preventDefault();
+//     try {
+//       const response = await axios.post("http://127.0.0.1:8000/auth/send-otp/", { email: formData.email });
+//       toast.success(response.data.message);
+//       setStep(2); // Move to Step 2 (Verify OTP)
+//     } catch (error) {
+//       toast.error(error.response?.data?.error || "Error sending OTP.");
+//     }
+//   };
+
+//   // ✅ Step 2: Verify OTP
+//   const handleVerifyOtp = async (e) => {
+//     e.preventDefault();
+//     try {
+//       const response = await axios.post("http://127.0.0.1:8000/auth/verify-otp/", { email: formData.email, otp: formData.otp });
+//       toast.success(response.data.message);
+//       setStep(3); // Move to Step 3 (Register)
+//     } catch (error) {
+//       toast.error(error.response?.data?.error || "Invalid OTP.");
+//     }
+//   };
+
+//   // ✅ Step 3: Register User
+//   const handleRegister = async (e) => {
 //     e.preventDefault();
 //     try {
 //       const response = await axios.post("http://127.0.0.1:8000/auth/register/", formData);
@@ -168,33 +227,65 @@ export default Register;
 //     <div className="container d-flex justify-content-center align-items-center vh-100">
 //       <div className="card shadow p-4" style={{ maxWidth: "400px", width: "100%" }}>
 //         <h2 className="text-center mb-4">Register</h2>
-//         <form onSubmit={handleSubmit}>
-//           <div className="mb-3 input-group">
-//             <span className="input-group-text"><FaUser /></span>
-//             <input type="text" name="username" className="form-control" placeholder="Username" onChange={handleChange} required />
-//           </div>
 
-//           <div className="mb-3 input-group">
-//             <span className="input-group-text"><MdEmail /></span>
-//             <input type="email" name="email" className="form-control" placeholder="Email" onChange={handleChange} required />
-//           </div>
+//         {step === 1 && (
+//           <form onSubmit={handleSendOtp}>
+//             <div className="mb-3 input-group">
+//               <span className="input-group-text"><MdEmail /></span>
+//               <input
+//                 type="email"
+//                 name="email"
+//                 className="form-control"
+//                 placeholder="Enter your email"
+//                 onChange={handleChange}
+//                 required
+//               />
+//             </div>
+//             <button type="submit" className="btn btn-primary w-100">Send OTP</button>
+//           </form>
+//         )}
 
-//           <div className="mb-3 input-group">
-//             <span className="input-group-text"><RiLockPasswordFill /></span>
-//             <input type="password" name="password" className="form-control" placeholder="Password" onChange={handleChange} required />
-//           </div>
+//         {step === 2 && (
+//           <form onSubmit={handleVerifyOtp}>
+//             <div className="mb-3 input-group">
+//               <span className="input-group-text">🔢</span>
+//               <input
+//                 type="text"
+//                 name="otp"
+//                 className="form-control"
+//                 placeholder="Enter OTP"
+//                 onChange={handleChange}
+//                 required
+//               />
+//             </div>
+//             <button type="submit" className="btn btn-success w-100">Verify OTP</button>
+//           </form>
+//         )}
 
-//           <div className="mb-3 input-group">
-//             <span className="input-group-text"><FaUserTag /></span>
-//             <select name="role" className="form-select" onChange={handleChange}>
-//               <option value="student">Student</option>
-//               <option value="teacher">Teacher</option>
-//               <option value="admin">Admin</option>
-//             </select>
-//           </div>
+//         {step === 3 && (
+//           <form onSubmit={handleRegister}>
+//             <div className="mb-3 input-group">
+//               <span className="input-group-text"><FaUser /></span>
+//               <input type="text" name="username" className="form-control" placeholder="Username" onChange={handleChange} required />
+//             </div>
 
-//           <button type="submit" className="btn btn-primary w-100">Register</button>
-//         </form>
+//             <div className="mb-3 input-group">
+//               <span className="input-group-text"><RiLockPasswordFill /></span>
+//               <input type="password" name="password" className="form-control" placeholder="Password" onChange={handleChange} required />
+//             </div>
+
+//             <div className="mb-3 input-group">
+//               <span className="input-group-text"><FaUserTag /></span>
+//               <select name="role" className="form-select" onChange={handleChange}>
+//                 <option value="student">Student</option>
+//                 <option value="teacher">Teacher</option>
+//                 <option value="admin">Admin</option>
+//               </select>
+//             </div>
+
+//             <button type="submit" className="btn btn-success w-100">Register</button>
+//           </form>
+//         )}
 //       </div>
 //       <ToastContainer />
 //     </div>
